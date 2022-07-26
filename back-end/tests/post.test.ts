@@ -3,7 +3,7 @@ import supertest from "supertest";
 import { prisma } from "../src/database.js";
 import { faker } from "@faker-js/faker";
 
-beforeEach( async () => {
+beforeEach(async () => {
   await prisma.recommendation.deleteMany({});
 });
 
@@ -53,5 +53,29 @@ describe("POST /recommendations", () => {
       .post("/recommendations")
       .send(newVideo);
     expect(response.status).toEqual(422);
+  });
+
+  it("given a valid video ID up vote should return 200", async () => {
+    const newVideo = {
+      name: "孤城",
+      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
+    };
+    await prisma.recommendation.create({
+      data: newVideo,
+    });
+    const videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        name: newVideo.name,
+      },
+    });
+
+    const id = videoFromDb.id;
+    const response = await supertest(app).post(`/recommendations/${id}/upvote`);
+    expect(response.status).toEqual(200);
+  });
+
+  it("given a invalid video ID vote should return 400", async () => {
+    const response = await supertest(app).post("/recommendations/0/upvote");
+    expect(response.status).toEqual(404);
   });
 });
