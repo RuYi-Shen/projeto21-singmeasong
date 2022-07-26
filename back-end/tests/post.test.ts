@@ -3,8 +3,8 @@ import supertest from "supertest";
 import { prisma } from "../src/database.js";
 import { faker } from "@faker-js/faker";
 
-beforeEach(() => {
-  prisma.recommendation.deleteMany({});
+beforeEach( async () => {
+  await prisma.recommendation.deleteMany({});
 });
 
 describe("POST /recommendations", () => {
