@@ -78,4 +78,57 @@ describe("POST /recommendations", () => {
     const response = await supertest(app).post("/recommendations/0/upvote");
     expect(response.status).toEqual(404);
   });
+
+  it("given a valid video ID down vote should return 200", async () => {
+    const newVideo = {
+      name: "孤城",
+      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
+    };
+    await prisma.recommendation.create({
+      data: newVideo,
+    });
+    const videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        name: newVideo.name,
+      },
+    });
+
+    const id = videoFromDb.id;
+    const response = await supertest(app).post(
+      `/recommendations/${id}/downvote`
+    );
+    expect(response.status).toEqual(200);
+  });
+
+  it("should exclude recommendation when score below -5", async () => {
+    const newVideo = {
+      name: "孤城",
+      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
+    };
+    await prisma.recommendation.create({
+      data: newVideo,
+    });
+    const videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        name: newVideo.name,
+      },
+    });
+
+    const id = videoFromDb.id;
+    for (let i = 0; i >= -5; i--) {
+      const response = await supertest(app).post(
+        `/recommendations/${id}/downvote`
+      );
+      expect(response.status).toEqual(200);
+    }
+    const response = await supertest(app).post(
+      `/recommendations/${id}/downvote`
+    );
+    expect(response.status).toEqual(404);
+  });
+
+  it("given a invalid video ID down vote should return 400", async () => {
+    const response = await supertest(app).post("/recommendations/0/downvote");
+    expect(response.status).toEqual(404);
+  });
 });
