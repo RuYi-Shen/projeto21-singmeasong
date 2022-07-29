@@ -32,7 +32,7 @@ describe("POST /recommendations", () => {
     expect(videoFromDb).toBeDefined();
   });
 
-  it("given a video with no name it should return 400", async () => {
+  it("given a video with no name it should return 422", async () => {
     const newVideo = {
       youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
     };
@@ -43,7 +43,7 @@ describe("POST /recommendations", () => {
     expect(response.status).toEqual(422);
   });
 
-  it("given a video with invalid youtube link it should return 400", async () => {
+  it("given a video with invalid youtube link it should return 422", async () => {
     const newVideo = {
       name: "孤城",
       youtubeLink: "https://www.google.com.br/",
@@ -74,7 +74,7 @@ describe("POST /recommendations", () => {
     expect(response.status).toEqual(200);
   });
 
-  it("given a invalid video ID vote should return 400", async () => {
+  it("given a invalid video ID vote should return 404", async () => {
     const response = await supertest(app).post("/recommendations/0/upvote");
     expect(response.status).toEqual(404);
   });
@@ -127,7 +127,7 @@ describe("POST /recommendations", () => {
     expect(response.status).toEqual(404);
   });
 
-  it("given a invalid video ID down vote should return 400", async () => {
+  it("given a invalid video ID down vote should return 404", async () => {
     const response = await supertest(app).post("/recommendations/0/downvote");
     expect(response.status).toEqual(404);
   });
