@@ -196,7 +196,7 @@ describe("recommendationsService get test suite", () => {
       score: 0,
     };
 
-    const times = 10;
+    const times = 100;
     let gt = 0;
     let lte = 0;
 
@@ -216,8 +216,8 @@ describe("recommendationsService get test suite", () => {
       const response = await recommendationService.getRandom();
       expect(response.score).toEqual(newRecommendation.score);
     }
-    expect(Math.ceil((100 * gt) / times)).toBeGreaterThanOrEqual(70);
-    expect(Math.floor((100 * lte) / times)).toBeLessThanOrEqual(30);
+    expect(Math.ceil((10 * gt) / times)/10).toBeGreaterThanOrEqual(0.7);
+    expect(Math.floor((10 * lte) / times)/10).toBeLessThanOrEqual(0.3);
     expect(recommendationRepository.findAll).toBeCalledTimes(times);
   });
   it("should get recommendations by random", async () => {

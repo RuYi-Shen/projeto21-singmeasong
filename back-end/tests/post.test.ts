@@ -1,7 +1,7 @@
 import app from "../src/app.js";
 import supertest from "supertest";
 import { prisma } from "../src/database.js";
-import { faker } from "@faker-js/faker";
+import { insertOne } from "./factories/recommendationsFactory.js";
 
 beforeEach(async () => {
   await prisma.recommendation.deleteMany({});
@@ -56,22 +56,17 @@ describe("POST /recommendations", () => {
   });
 
   it("given a valid video ID up vote should return 200", async () => {
-    const newVideo = {
-      name: "孤城",
-      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
-    };
-    await prisma.recommendation.create({
-      data: newVideo,
-    });
-    const videoFromDb = await prisma.recommendation.findUnique({
-      where: {
-        name: newVideo.name,
-      },
-    });
+    const id = await insertOne();
 
-    const id = videoFromDb.id;
     const response = await supertest(app).post(`/recommendations/${id}/upvote`);
     expect(response.status).toEqual(200);
+
+    const videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        id,
+      },
+    });
+    expect(videoFromDb.score).toBe(1);
   });
 
   it("given a invalid video ID vote should return 404", async () => {
@@ -80,55 +75,51 @@ describe("POST /recommendations", () => {
   });
 
   it("given a valid video ID down vote should return 200", async () => {
-    const newVideo = {
-      name: "孤城",
-      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
-    };
-    await prisma.recommendation.create({
-      data: newVideo,
-    });
-    const videoFromDb = await prisma.recommendation.findUnique({
-      where: {
-        name: newVideo.name,
-      },
-    });
+    const id = await insertOne();
 
-    const id = videoFromDb.id;
     const response = await supertest(app).post(
       `/recommendations/${id}/downvote`
     );
     expect(response.status).toEqual(200);
+    const videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        id,
+      },
+    });
+    expect(videoFromDb.score).toBe(-1);
   });
 
   it("should exclude recommendation when score below -5", async () => {
-    const newVideo = {
-      name: "孤城",
-      youtubeLink: "https://www.youtube.com/watch?v=r2sCy9ZOToA",
-    };
-    await prisma.recommendation.create({
-      data: newVideo,
-    });
-    const videoFromDb = await prisma.recommendation.findUnique({
-      where: {
-        name: newVideo.name,
-      },
-    });
+    const id = await insertOne();
 
-    const id = videoFromDb.id;
-    for (let i = 0; i >= -5; i--) {
+    for (let i = 0; i > -5; i--) {
       const response = await supertest(app).post(
         `/recommendations/${id}/downvote`
       );
-      expect(response.status).toEqual(200);
     }
-    const response = await supertest(app).post(
-      `/recommendations/${id}/downvote`
-    );
-    expect(response.status).toEqual(404);
+
+    let videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        id,
+      },
+    });
+    expect(videoFromDb.score).toBe(-5);
+    await supertest(app).post(`/recommendations/${id}/downvote`);
+
+    videoFromDb = await prisma.recommendation.findUnique({
+      where: {
+        id,
+      },
+    });
+    expect(videoFromDb).toBeNull();
   });
 
   it("given a invalid video ID down vote should return 404", async () => {
     const response = await supertest(app).post("/recommendations/0/downvote");
     expect(response.status).toEqual(404);
   });
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
 });
